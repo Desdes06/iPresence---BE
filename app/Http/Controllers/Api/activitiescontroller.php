@@ -7,8 +7,8 @@ use App\Models\Activities;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
+
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
 
 class ActivitiesController extends Controller
 {
@@ -35,13 +35,15 @@ class ActivitiesController extends Controller
             $validatedData = $request->validate([
                 'nama_aktivitas' => 'required|string',
                 'uraian' => 'required|string',
-                'tanggal' => 'required|date'
+                'tanggal' => 'required|date',
+                'users_id' => 'required|integer',
             ]);
 
             $aktivitas = Activities::create([
                 'nama_aktivitas' => $validatedData['nama_aktivitas'],
                 'uraian' => $validatedData['uraian'],
                 'tanggal' => $validatedData['tanggal'] ?? now(),
+                'users_id' => $validatedData['users_id'], 
             ]);
 
             return response()->json(['message' => 'success create new activities', 'data' => $aktivitas], Response::HTTP_CREATED);
@@ -71,18 +73,16 @@ class ActivitiesController extends Controller
         }
     
         $validatedData = $request->validate([
-            'tasks_id' => 'nullable|integer',
             'nama_aktivitas' => 'nullable|string|max:255',
             'uraian' => 'nullable|string|max:255',
             'tanggal' => 'nullable|date',  
-            'users_id' => 'nullable|integer',
         ]);
     
         $validatedData['tanggal'] = $validatedData['tanggal'] ?? Carbon::today()->toDateString();
     
         $aktivitas->update($validatedData);
     
-        return response()->json(['message' => 'update activities success'], Response::HTTP_OK);
+        return response()->json(['message' => 'update activities success', 'data' => $aktivitas], Response::HTTP_OK);
     }
 
     public function updateStatus(Request $request, int $id)
