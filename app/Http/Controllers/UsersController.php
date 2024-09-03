@@ -17,10 +17,19 @@ class UsersController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $users = Users::with('roles')->get();
-        return response()->json($users, 200);
-    }
+{
+    $users = Users::with('roles')->get();
+
+    // Ubah kolom 'img' menjadi format base64
+    $users->transform(function ($user) {
+        if ($user->img) {
+            $user->img = base64_encode($user->img);
+        }
+        return $user;
+    });
+
+    return response()->json($users, 200);
+}
 
     /**
      * Show the form for creating a new resource.
@@ -102,12 +111,22 @@ class UsersController extends Controller
      */
     public function show($id)
     {
+        // Temukan user berdasarkan ID
         $user = Users::find($id);
+        
+        // Jika user tidak ditemukan, kirimkan respons dengan pesan kesalahan
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        return response()->json( ['data' => $user], 200);
-    }
+    
+        // Ubah kolom 'img' menjadi format base64 jika ada
+        if ($user->img) {
+            $user->img = base64_encode($user->img);
+        }
+    
+        // Kirimkan respons dengan data user
+        return response()->json(['data' => $user], 200);
+    }    
 
     /**
      * Update the specified resource in storage.
@@ -174,95 +193,113 @@ class UsersController extends Controller
 
 
     public function uploadphoto(Request $request, $id)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'img' => 'nullable|image',
-            ]);
-        
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-    
-            $user = Users::find($id);
-            if (!$user) {
-                return response()->json(['message' => 'User not found'], 404);
-            }    
-                $image = $request->file('img');
-                $imageName = $image->hashName();
-                $image->storeAs('public/posts', $imageName);
-    
-                $user->img = $imageName ?? $user->img;
-            
-    
-            $user->update([
-                'nisn' => $request->nisn ?? $user->nisn,
-                'email' => $request->email ?? $user->email,
-                'username' => $request->username ?? $user->username,
-                'nama_lengkap' => $request->nama_lengkap ?? $user->nama_lengkap,
-                'role_id' => $request->role_id ?? $user->role_id,
-                'asal_sekolah' => $request->asal_sekolah ?? $user->asal_sekolah,
-                'usertype' => $request->usertype ?? $user->usertype,
-                'tanggal_bergabung' => $request->tanggal_bergabung ?? $user->tanggal_bergabung,
-            ]);
-    
-            return response()->json(['message' => 'User updated successfully', 'user' => $user], 200);
-    
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Server Error', 'error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
+{
+    try {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'img' => 'nullable|image', // Validasi file gambar
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Temukan user berdasarkan ID
+        $user = Users::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Jika ada file gambar yang diunggah
+        if ($request->hasFile('img')) {
+            $image = $request->file('img');
+            $imageData = file_get_contents($image->getRealPath()); // Membaca data gambar dalam format biner
+            
+            // Simpan data biner ke kolom img
+            $user->img = $imageData;
+        }
+
+        // Mengupdate field lainnya
+        $user->nisn = $request->nisn ?? $user->nisn;
+        $user->email = $request->email ?? $user->email;
+        $user->username = $request->username ?? $user->username;
+        $user->nama_lengkap = $request->nama_lengkap ?? $user->nama_lengkap;
+        $user->role_id = $request->role_id ?? $user->role_id;
+        $user->asal_sekolah = $request->asal_sekolah ?? $user->asal_sekolah;
+        $user->usertype = $request->usertype ?? $user->usertype;
+        $user->tanggal_bergabung = $request->tanggal_bergabung ?? $user->tanggal_bergabung;
+
+        // Simpan perubahan
+        $user->save();
+
+        return response()->json(['message' => 'User updated successfully', 'user' => $user], 200);
+
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Server Error', 'error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+}
+
+    // Endpoint untuk mengupdate data pengguna, termasuk gambar
     public function updatephoto(Request $request, $id)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'img' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-            ]);
-    
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-    
-            $user = Users::find($id);
-            if (!$user) {
-                return response()->json(['message' => 'User not found'], 404);
-            }
-    
-            if ($request->hasFile('img')) {
-                if ($user->img) {
-                    Storage::delete('public/posts/' . $user->img);
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'nisn' => 'nullable|integer',
+            'email' => 'nullable|email',
+            'username' => 'nullable|string',
+            'nama_lengkap' => 'nullable|string',
+            'role_id' => 'nullable|integer',
+            'asal_sekolah' => 'nullable|string',
+            'usertype' => 'nullable|string',
+            'tanggal_bergabung' => 'nullable|date',
+            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi file gambar
+        ]);
 
-                } else {
-                    $lama = $user->img;
-                    Storage::delete('public/posts/' . $lama);
-                }
-    
-                $image = $request->file('img');
-                log::info($image);
-                $imageName = $image->hashName();
-                $image->storeAs('public/posts', $imageName);
-    
-                $user->img = $imageName ?? $user->img;
-
-            }
-    
-            $user->update([
-                'nisn' => $request->nisn ?? $user->nisn,
-                'email' => $request->email ?? $user->email,
-                'username' => $request->username ?? $user->username,
-                'nama_lengkap' => $request->nama_lengkap ?? $user->nama_lengkap,
-                'role_id' => $request->role_id ?? $user->role_id,
-                'asal_sekolah' => $request->asal_sekolah ?? $user->asal_sekolah,
-                'usertype' => $request->usertype ?? $user->usertype,
-                'tanggal_bergabung' => $request->tanggal_bergabung ?? $user->tanggal_bergabung,
-            ]);
-    
-            return response()->json(['message' => 'User updated successfully', 'user' => $user], 200);
-    
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Server Error', 'error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        // Cek apakah validasi gagal
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
         }
+
+        // Temukan user berdasarkan ID
+        $user = Users::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // Membaca file gambar dan menyimpannya dalam format biner
+        if ($request->hasFile('img')) {
+            $imageData = file_get_contents($request->file('img')->getRealPath());
+            $user->img = $imageData; // Simpan data biner ke kolom img
+        }
+
+        // Mengupdate field lainnya
+        $user->nisn = $request->nisn ?? $user->nisn;
+        $user->email = $request->email ?? $user->email;
+        $user->username = $request->username ?? $user->username;
+        $user->nama_lengkap = $request->nama_lengkap ?? $user->nama_lengkap;
+        $user->role_id = $request->role_id ?? $user->role_id;
+        $user->asal_sekolah = $request->asal_sekolah ?? $user->asal_sekolah;
+        $user->usertype = $request->usertype ?? $user->usertype;
+        $user->tanggal_bergabung = $request->tanggal_bergabung ?? $user->tanggal_bergabung;
+
+        // Simpan perubahan
+        $user->save();
+
+        return response()->json(['message' => 'User updated successfully', 'user' => $user], 200);
     }
 
+    
+    public function showImage($id)
+    {
+        $user = Users::find($id);
+        if (!$user || !$user->img) {
+            return response()->json(['message' => 'Image not found'], 404);
+        }
+
+        // Deteksi tipe MIME dari gambar yang disimpan
+        $mimeType = finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $user->img);
+
+        return response($user->img)
+            ->header('Content-Type', $mimeType);
+    }
 }
