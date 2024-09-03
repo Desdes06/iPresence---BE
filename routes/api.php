@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Resources\PostResource;
-use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\activitiescontroller;
 use Illuminate\Support\Facades\Route;
@@ -40,8 +38,4 @@ Route::post('/update/{id}', [UsersController::class, 'updatephoto']);
 Route::post('/loginUser', [AuthController::class, 'loginUser']);  //ini untuk login
 Route::post('/logoutUser', [AuthController::class, 'logoutUser']); //ini untuk logout
 
-
-
-
-
-
+Route::get('/users/{id}/image', [UsersController::class, 'showImage']);
