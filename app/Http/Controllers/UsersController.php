@@ -18,7 +18,6 @@ class UsersController extends Controller
     {
         $users = Users::with('roles')->get();
 
-        // Ubah kolom 'img' menjadi format base64
         $users->transform(function ($user) {
             if ($user->img) {
                 $user->img = base64_encode($user->img);
