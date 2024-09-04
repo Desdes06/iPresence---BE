@@ -13,25 +13,23 @@ use Illuminate\Validation\ValidationException;
 class ActivitiesController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Activities::query();
+    {
+        $query = Activities::query();
 
-    if ($request->has('users_id')) {
-        $query->where('users_id', $request->users_id);
-    }
-
-    $aktivitas = $query->with(['user'])->get();
-
-    // Mengonversi BLOB menjadi base64
-    foreach ($aktivitas as $item) {
-        if ($item->user && $item->user->img) {
-            $item->user->img = base64_encode($item->user->img);
+        if ($request->has('users_id')) {
+            $query->where('users_id', $request->users_id);
         }
+
+        $aktivitas = $query->with(['user'])->get();
+
+        foreach ($aktivitas as $item) {
+            if ($item->user && $item->user->img) {
+                $item->user->img = base64_encode($item->user->img);
+            }
+        }
+
+        return response()->json($aktivitas, 200);
     }
-
-    return response()->json($aktivitas, 200);
-}
-
 
     public function store(Request $request)
     {
