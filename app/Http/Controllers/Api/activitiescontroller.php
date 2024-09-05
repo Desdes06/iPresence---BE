@@ -62,6 +62,10 @@ class ActivitiesController extends Controller
         if (!$aktivitas) {
             return response()->json(['message' => 'activities not found'], 404);
         }
+
+        if ($aktivitas->user && $aktivitas->user->img) {
+            $aktivitas->user->img = base64_encode($aktivitas->user->img);
+        }
         
         return response()->json($aktivitas);
     }
