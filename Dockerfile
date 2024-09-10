@@ -1,4 +1,5 @@
 FROM registry.dev.torche.id/torche/nginx:stable
+#FROM public.ecr.aws/o7j4g5o0/nginx:latest
 
 RUN apk --no-cache add supervisor
 COPY .kubernetes/nginx_cors.conf /etc/nginx/cors.conf

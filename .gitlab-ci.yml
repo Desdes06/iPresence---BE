@@ -1,0 +1,58 @@
+default:
+  tags:
+    - kantor-php
+ 
+stages:
+  - preparation
+  - build
+  - deployment
+
+composer:
+  stage: preparation
+  only:
+    #- master
+    - alifa
+  script:
+    - composer update --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
+    - composer dump-autoload
+  artifacts:
+    paths:
+      - vendor/
+    expire_in: 1 days
+    when: always
+  cache:
+    paths:
+      - vendor/
+    key: 
+      files: 
+        - composer.lock
+
+docker:
+  stage: build
+  only:
+    #- master
+    - alifa
+  before_script:
+    - echo "$CUSTOM_REGISTRY_PASSWORD" | docker login -u "$CUSTOM_REGISTRY_USER" --password-stdin $CUSTOM_REGISTRY_URL
+  script:
+    - export IMAGE=$CUSTOM_REGISTRY_BASEDN/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA
+    - docker build -t $IMAGE .
+    - docker push $IMAGE
+
+kubernetes:
+  stage: deployment
+  only:
+    #- master
+    - alifa
+  script:
+    - sed -i "s,<IMAGE_NAME>,${CUSTOM_REGISTRY_BASEDN}/${CI_PROJECT_ROOT_NAMESPACE}/${CI_PROJECT_NAME},g" .kubernetes/deploy.yml
+    - sed -i "s,<IMAGE_VERSION>,${CI_COMMIT_SHORT_SHA},g" .kubernetes/deploy.yml
+    - sed -i "s,<PROJECT_NAME>,${CI_PROJECT_NAME},g" .kubernetes/deploy.yml
+    - sed -i "s,<PROJECT_NAMESPACE>,${CI_PROJECT_ROOT_NAMESPACE},g" .kubernetes/deploy.yml
+    - sed -i "s,<OUTPUT_URL>,${CI_PROJECT_NAME}.${BASE_DOMAIN},g" .kubernetes/deploy.yml
+    - sed -i "s,<PROJECT_NAME>,${CI_PROJECT_NAME},g" .kubernetes/config.yml
+    - sed -i "s,<PROJECT_NAMESPACE>,${CI_PROJECT_ROOT_NAMESPACE},g" .kubernetes/config.yml
+    - sed -i "s,<OUTPUT_URL>,${CI_PROJECT_NAME}.${BASE_DOMAIN},g" .kubernetes/config.yml
+    - kubectl apply -f .kubernetes/config.yml
+    - kubectl apply -f .kubernetes/deploy.yml
+    - echo "Application should be accessible at https://${CI_PROJECT_NAME}.${BASE_DOMAIN}";
