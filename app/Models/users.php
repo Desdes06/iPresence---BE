@@ -11,7 +11,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 
 
-class users extends Model
+class users extends Authenticatable implements JWTSubject
 {
 
     use HasFactory, Notifiable;
@@ -42,5 +42,22 @@ class users extends Model
     public function roles()
     {
         return $this->belongsTo(roles::class, 'role_id', 'id');
+    }
+
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($image) => url('/storage/posts/' . $image),
+        );
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }
