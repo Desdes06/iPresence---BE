@@ -25,8 +25,8 @@ data:
   DB_CONNECTION: mysql
   DB_HOST: "192.168.2.11"
   DB_PORT: "3306"
-  DB_DATABASE: smk-magang
-  DB_USERNAME: idmai_dev
+  DB_DATABASE: magang_tasks
+  DB_USERNAME: smk-magang
   DB_PASSWORD: P@ssw0rd
   SESSION_DRIVER: file
   SESSION_LIFETIME: "1800"
