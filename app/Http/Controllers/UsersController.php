@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Users;
+use App\Models\users;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +16,7 @@ class UsersController extends Controller
      */
     public function index()
     {
-        $users = Users::with('roles')->get();
+        $users = users::with('roles')->get();
 
         $users->transform(function ($user) {
             if ($user->img) {
@@ -43,7 +43,7 @@ class UsersController extends Controller
                 'asal_sekolah' => 'required|string',
             ]);
 
-            $user = Users::create([
+            $user = users::create([
                 'nisn' => $validated['nisn'],
                 'username' => $validated['username'],
                 'email' => $validated['email'],
@@ -85,7 +85,7 @@ class UsersController extends Controller
         $image->storeAs('public/posts', $image->hashName());
 
         try {
-            $user = Users::create([
+            $user = users::create([
                 'nisn' => $validated['nisn'],
                 'username' => $validated['username'] ?? null,
                 'email' => $validated['email'] ?? 'tidak diketahui',
@@ -108,7 +108,7 @@ class UsersController extends Controller
     public function show($id)
     {
 
-        $user = Users::find($id);
+        $user = users::find($id);
         
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
@@ -143,7 +143,7 @@ class UsersController extends Controller
                 return response()->json($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $user = Users::find($id);
+            $user = users::find($id);
             if (!$user) {
                 return response()->json(['message' => 'User not found'], 404);
             }
@@ -172,7 +172,7 @@ class UsersController extends Controller
      */
     public function destroy(string $id)
     {
-        $user = Users::find($id);
+        $user = users::find($id);
         if (!$user) {
             return response()->json(['message' => 'Post not found'], 404);
         }
@@ -193,7 +193,7 @@ class UsersController extends Controller
                 return response()->json($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
             }
     
-            $user = Users::find($id);
+            $user = users::find($id);
             if (!$user) {
                 return response()->json(['message' => 'User not found'], 404);
             }
@@ -243,7 +243,7 @@ class UsersController extends Controller
             return response()->json($validator->errors(), 422);
         }
  
-        $user = Users::find($id);
+        $user = users::find($id);
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
@@ -272,7 +272,7 @@ class UsersController extends Controller
  
     public function showImage($id)
     {
-        $user = Users::find($id);
+        $user = users::find($id);
         if (!$user || !$user->img) {
             return response()->json(['message' => 'Image not found'], 404);
         }
