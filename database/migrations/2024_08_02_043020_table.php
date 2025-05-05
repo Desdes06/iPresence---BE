@@ -11,28 +11,18 @@ return new class extends Migration
      */
     public function up()
     {
+
         if (!Schema::hasTable('activities')){
             Schema::create('activities', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('tasks_id');
                 $table->string('nama_aktivitas');
                 $table->string('uraian');
                 $table->date('tanggal');
-                $table->string('status');
+                $table->enum('status', ['PROSES', 'SELESAI'])->default('PROSES');
                 $table->unsignedBigInteger('users_id');
                 $table->timestamps();
 
-                $table->foreign('tasks_id')->references('id')->on('tasks')->onDelete('cascade');
                 $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');
-            });
-        }
-
-        if (!Schema::hasTable('tasks')){
-            Schema::create('tasks', function (Blueprint $table) {
-                $table->id();
-                $table->string('nama');
-                $table->string('deskripsi');
-                $table->timestamps();
             });
         }
 
@@ -46,6 +36,5 @@ return new class extends Migration
     public function down()
     {
         Schema::dropIfExists('activities');
-        Schema::dropIfExists('tasks');
     }
 };

@@ -30,7 +30,7 @@ Route::apiResource('/users', UsersController::class); //ini bisa buat nambah fot
 
 
 Route::apiResource('activities', activitiescontroller::class);  // ini untuk menambahkan aktivitas
-Route::patch('/activities/{id}/status', [ActivitiesController::class, 'updateStatus']);
+Route::put('/activities/{id}/status', [ActivitiesController::class, 'updateStatus']);
 
 Route::post('/upload/{id}', [UsersController::class, 'uploadphoto']);
 Route::post('/update/{id}', [UsersController::class, 'updatephoto']);
